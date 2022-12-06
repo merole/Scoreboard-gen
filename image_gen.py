@@ -3,12 +3,6 @@ from PIL import Image, ImageDraw, ImageFont
 from os.path import join
 import sys
 
-STATS = {
-    "valorant_1": ["ACS"],
-    "valorant_2": ["K", "D", "A", "ECON"],
-    "empty": []
-}
-
 VALORANT_CHAR_ABBR = {
     "as":"Valorant/Astra.jpg",
     "br":"Valorant/Breach.jpg",
@@ -59,7 +53,7 @@ def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
             return
         im_width = img.width
         im_height = img.height
-        n = len(STATS[stats])
+        n = len(stats)
         tabulka = [ImageDraw.Draw(img) for _ in range(n+1)]
         # 1x mapa
         mapa = ImageDraw.Draw(img)
@@ -75,11 +69,11 @@ def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
         y = 1050
         width = 100
         Team1 = f.readline().rstrip("\n")
-        vals = [[Team1,(138,14,23), 80] , *STATS[stats]]
+        vals = [[Team1,(138,14,23), 80] , *stats]
         for i, t in zip(tabulka, vals):
             if isinstance(t, list):    
                 i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
-                x += width*6 - 50
+                x += width*4
             else:
                 i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
                 x += width
@@ -90,10 +84,10 @@ def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
 
         y += height
         for i in players1:
-            x = 330
+            x = 300
             temp = ImageDraw.Draw(img)
             temp.multiline_text((x, y), i[0] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width*6 - 270
+            x += width*4
             for t in i[1:]: 
                 temp = ImageDraw.Draw(img)
                 temp.multiline_text((x, y), t ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
@@ -105,11 +99,11 @@ def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
         y = 1500
         width = 100
         Team2 = f.readline().rstrip("\n")
-        vals = [[Team2, (138,14,23), 80] , *STATS[stats]]
+        vals = [[Team2, (138,14,23), 80] , *stats]
         for i, t in zip(tabulka, vals):
             if isinstance(t, list):    
                 i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
-                x += width*6 - 50
+                x += width*4
             else:
                 i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
                 x += width
@@ -120,10 +114,10 @@ def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
 
         y += height
         for i in players1:
-            x = 330
+            x = 300
             temp = ImageDraw.Draw(img)
             temp.multiline_text((x, y), i[0], anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width*6 - 270
+            x += width*4
             for t in i[1:]: 
                 temp = ImageDraw.Draw(img)
                 temp.multiline_text((x, y), t, anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
