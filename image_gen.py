@@ -1,12 +1,15 @@
 from copy import copy
 from PIL import Image, ImageDraw, ImageFont
-img_orig = Image.open('Logo.png')
-stats = ["ACS"]
-stats1 = ["K", "D", "A", "ECON"]
-im_width = img_orig.width
-im_height = img_orig.height
+from os.path import join
+import sys
 
-names = {
+STATS = {
+    "valorant_1": ["ACS"],
+    "valorant_2": ["K", "D", "A", "ECON"],
+    "empty": []
+}
+
+VALORANT_CHAR_ABBR = {
     "as":"Valorant/Astra.jpg",
     "br":"Valorant/Breach.jpg",
     "ch":"Valorant/Chamber.jpg",
@@ -27,17 +30,14 @@ names = {
     "yo":"Valorant/Yoru.png",
 }
 
-
-
 # pocet vals
 font_size = 65
 foont_size2 = 55
-scoreboard = "Fonts/Scoreboard Regular.ttf"
-mvp = "Fonts/acquire.otf"
+scoreboard = "./fonts/Scoreboard Regular.ttf"
+mvp = "./fonts/acquire.otf"
 height = 70
 
-# trl c + ctrl v
-def transpose(matrix):
+def transpose(matrix: list) -> list:
     rows = len(matrix)
     columns = len(matrix[0])
 
@@ -50,151 +50,100 @@ def transpose(matrix):
 
     return matrix_T
 
-# 1x mapa
-mapa = ImageDraw.Draw(img_orig)
-mapa.multiline_text((im_width/2, 200), input(), anchor="mm", fill=(0,0,0), font=ImageFont.truetype(font=mvp, size=120), align="center")
-# 2x skore
-print("")
-score1 = ImageDraw.Draw(img_orig)
-score1.multiline_text((75, 1200), input(),anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=350), align="right")
-score2 = ImageDraw.Draw(img_orig)
-score2.multiline_text((75, 1650), input(),anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=350), align="right")
+def modify(stats: str, img: str, inp: str, o: str, d: str, quiet: bool) -> None:
+    with open(inp, "r") as f:
+        try:
+            img = Image.open(img)
+        except FileNotFoundError as err:
+            print(f"{__file__}: {sys.stderr}: {err.strerror} \n Invalid file name")
+            return
+        im_width = img.width
+        im_height = img.height
+        n = len(STATS[stats])
+        tabulka = [ImageDraw.Draw(img) for _ in range(n+1)]
+        # 1x mapa
+        mapa = ImageDraw.Draw(img)
+        mapa.multiline_text((im_width/2, 200), f.readline().rstrip("\n"), anchor="mm", fill=(0,0,0), font=ImageFont.truetype(font=mvp, size=100), align="center")
+        # 2x skore
+        score1 = ImageDraw.Draw(img)
+        score1.multiline_text((75, 1300), f.readline().rstrip("\n"),anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=350), align="right")
+        score2 = ImageDraw.Draw(img)
+        score2.multiline_text((75, 1750), f.readline().rstrip("\n"),anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=350), align="right")
 
-#prvni obrazek, tabulka s obrazkem, jmenem a acs
-def img1():
-    img = copy(img_orig)
-    n = len(stats) + 1 
-    #objekt tabulky legendy
-    tabulka = [ImageDraw.Draw(img) for _ in range(len(stats) + 1)]
-
-    #pozice prvniho textu
-    x = 185
-    y = 1000
-
-    width = 280
-    
-    #prvni tym
-    Team1 = input(" ")
-    vals = [[Team1, (138,14,23), 80], *stats]
-    #jmeno tymu, legenda
-    tabulka[0].multiline_text((x, y), vals[0][0] ,anchor="lm", fill=vals[0][1], font=ImageFont.truetype(font=scoreboard, size=vals[0][2]), align="left")
-    x += width*3 + - 50
-    tabulka[1].multiline_text((x, y), vals[1] ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
-    #hraci
-    y += height
-    players = [[input() for _ in range(5)] for i in range(n+1)]
-    players = transpose(players)
-    for i in range(5):
-            x = 405
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), players[i][0] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width + 150
-            im = Image.open(names[players[i][1]])
-            img.paste(im, (x, y-30))
-            x += width - 150 
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), players[i][2] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
+        #prvni tym
+        x = 300
+        y = 1050
+        width = 100
+        Team1 = f.readline().rstrip("\n")
+        vals = [[Team1,(138,14,23), 80] , *STATS[stats]]
+        for i, t in zip(tabulka, vals):
+            if isinstance(t, list):    
+                i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
+                x += width*6 - 50
+            else:
+                i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
+                x += width
             
+
+        players1 = [ [ f.readline().rstrip("\n").rstrip("\n") for _ in range(5)] for _ in range(n+1) ]
+        players1 = transpose(players1)
+
+        y += height
+        for i in players1:
+            x = 330
+            temp = ImageDraw.Draw(img)
+            temp.multiline_text((x, y), i[0] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
+            x += width*6 - 270
+            for t in i[1:]: 
+                temp = ImageDraw.Draw(img)
+                temp.multiline_text((x, y), t ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
+                x += width
+            y += height
+        
+        #druhy tym
+        x = 300
+        y = 1500
+        width = 100
+        Team2 = f.readline().rstrip("\n")
+        vals = [[Team2, (138,14,23), 80] , *STATS[stats]]
+        for i, t in zip(tabulka, vals):
+            if isinstance(t, list):    
+                i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
+                x += width*6 - 50
+            else:
+                i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
+                x += width
+            
+
+        players1 = [ [ f.readline().rstrip("\n") for _ in range(5)] for _ in range(n+1) ]
+        players1 = transpose(players1)
+
+        y += height
+        for i in players1:
+            x = 330
+            temp = ImageDraw.Draw(img)
+            temp.multiline_text((x, y), i[0], anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
+            x += width*6 - 270
+            for t in i[1:]: 
+                temp = ImageDraw.Draw(img)
+                temp.multiline_text((x, y), t, anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
+                x += width
             y += height
 
-    #druhy tym
-
-    x = 185
-    y = 1450
-    Team2 = input(" ")
-    vals = [[Team2, (138,14,23), 80], *stats]
-    #jmeno tymu, legenda
-    tabulka[0].multiline_text((x, y), vals[0][0] ,anchor="lm", fill=vals[0][1], font=ImageFont.truetype(font=scoreboard, size=vals[0][2]), align="left")
-    x += width*3 - 50
-    tabulka[1].multiline_text((x, y), vals[1] ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
-    #hraci
-    y += height
-    players = [[input("") for _ in range(5)] for i in range(n+1)]
-    players = transpose(players)
-    for i in range(5):
-            x = 405
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), players[i][0] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width + 150
-            im = Image.open(names[players[i][1]])
-            img.paste(im, (x, y-30))
-            x += width - 150
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), players[i][2] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            
-            y += height
-    
-    img.show()
-    img.save("v1/" + Team1 + "vs2"+Team2 + "_1.png")
-
-
-def img2():
-    img = copy(img_orig)
-    n = len(stats1)
-    tabulka = [ImageDraw.Draw(img) for _ in range(n+1)]
-
-    #prvni tym
-    x = 185
-    y = 1000
-    width = 100
-    Team1 = input(" ")
-    vals = [[Team1,(138,14,23), 80] , *stats1]
-    for i, t in zip(tabulka, vals):
-        if isinstance(t, list):    
-            i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
-            x += width*6 - 50
+        if not quiet:
+            img.show()
+        output = ""
+        if d:
+            output = join(output, d)
+        if o:
+            output = join(output, o)
         else:
-            i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
-            x += width
-        
+            output = join(f"{Team1}_vs_{Team2}.png")
+            print(output)
+        if output[-4:] != ".png":
+            output += ".png"
+        try:
+            img.save(output)
+        except (FileNotFoundError, IsADirectoryError) as err:
+            print(f"{__file__}: {sys.stderr}: {err.strerror} \n Invalid directory")
 
-    players1 = [ [ input() for _ in range(5)] for _ in range(n+1) ]
-    players1 = transpose(players1)
-
-    y += height
-    for i in players1:
-        x = 405
-        temp = ImageDraw.Draw(img)
-        temp.multiline_text((x, y), i[0] ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-        x += width*6 - 270
-        for t in i[1:]: 
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), t ,anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width
-        y += height
-    
-    #druhy tym
-    x = 185
-    y = 1450
-    width = 100
-    Team2 = input(" ")
-    vals = [[Team2, (138,14,23), 80] , *stats1]
-    for i, t in zip(tabulka, vals):
-        if isinstance(t, list):    
-            i.multiline_text((x, y), t[0], anchor="lm", fill=t[1], font=ImageFont.truetype(font=scoreboard, size=t[2]), align="left")
-            x += width*6 - 50
-        else:
-            i.multiline_text((x, y), t ,anchor="lm", fill=(23,57,108), font=ImageFont.truetype(font=scoreboard, size=foont_size2), align="left")
-            x += width
-        
-
-    players1 = [ [ input() for _ in range(5)] for _ in range(n+1) ]
-    players1 = transpose(players1)
-
-    y += height
-    for i in players1:
-        x = 405
-        temp = ImageDraw.Draw(img)
-        temp.multiline_text((x, y), i[0], anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-        x += width*6 - 270
-        for t in i[1:]: 
-            temp = ImageDraw.Draw(img)
-            temp.multiline_text((x, y), t, anchor="lm", fill=(0,0,0), font=ImageFont.truetype(font=scoreboard, size=font_size), align="left")
-            x += width
-        y += height
-
-    img.show()
-    img.save("v1/"+Team1+"vs2"+Team2+"_2.png")
-
-img1()
-img2()
